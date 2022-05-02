@@ -1,0 +1,37 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class CreateStoresTable extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::create('stores', function (Blueprint $table) {
+            $table->id();
+            $table->string('name')->nullable(false)->default('Store 1');
+            $table->string('location')->nullable(false);
+            $table->string('lat')->nullable(false);
+            $table->string('long')->nullable(false);
+            $table->integer('user_id')->nullable(false);
+            $table->integer('is_active')->nullable(false)->default(1);//true
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::dropIfExists('stores');
+    }
+}
