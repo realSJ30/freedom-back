@@ -47,4 +47,6 @@ class User extends Authenticatable
     function stores(){
         return $this->hasMany(Stores::class,'user_id');
     }
+
+  
 }

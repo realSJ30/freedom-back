@@ -39,6 +39,7 @@ class StoresController extends Controller
                 'created_at'=>DB::raw('CURRENT_TIMESTAMP'),
                 'updated_at'=>DB::raw('CURRENT_TIMESTAMP'),
             ]);
+            $store->owner = auth()->user()->name;
 
             return $this->onSuccess($store,'Store created successfully!', 200);
         }        
@@ -57,8 +58,13 @@ class StoresController extends Controller
 
         if($validator->fails()){
             return $this->onError(201,'Store not updated!');
+            // $response = [
+            //     'message' => 'Store not updated!', 
+            //     'error' => $validator->messages()              
+            // ];
         }
-        $store = Stores::find($id);        
+        $store = Stores::find($id);   
+        
 
         if($store->user_id != auth()->user()->id){
             return $this->onError(401,'Unauthorized store update!');
@@ -71,19 +77,85 @@ class StoresController extends Controller
             'long' => $request->long
         ]);
 
-        return $this->onSuccess($store->first(),'Store updated successfully!');
+        return $this->onSuccess($store,'Store updated successfully!');
     }
 
-    public function getStores(){
-
+    public function get_stores(){
+        $role = auth()->user()->role;
+        // web
+        if($role == 1 || $role == 2){
+            $stores = Stores::join('users','stores.user_id','users.id')
+            ->select('stores.*','users.name as owner')
+            ->orderBy('stores.created_at','desc')
+            ->get();
+            return $this->onSuccess($stores);
+        }else{
+            $stores = Stores::join('users','stores.user_id','users.id')
+            ->where('stores.user_id','=',auth()->user()->id)
+            ->select('stores.*','users.name as owner')
+            ->orderBy('stores.created_at','desc')
+            ->get();
+            return $this->onSuccess($stores);
+        }
         // if admin|moderator retreive all stores
         if($this->isAdmin(auth()->user()) || $this->isModerator(auth()->user())){
-            $stores = Stores::all();
+            $stores = Stores::join('users','stores.user_id','users.id')
+            ->select('stores.*','users.name as owner')
+            ->orderBy('stores.created_at','desc')
+            ->get();
             return $this->onSuccess($stores);
         }else{
             // if not find all store that associated with user id
-            $stores = User::with('stores')->find(auth()->user()->id)->stores;
+            // $stores = User::with('stores')->find(auth()->user()->id)->stores;
+            $stores = Stores::join('users','stores.user_id','users.id')
+            ->where('stores.user_id','=',auth()->user()->id)
+            ->select('stores.*','users.name as owner')
+            ->orderBy('stores.created_at','desc')
+            ->get();
             return $this->onSuccess($stores);
+        }                
+    }
+
+    public function get_store($id){
+
+        $role = auth()->user()->role;
+        // web
+        if($role == 1 || $role == 2){
+            $store = Stores::join('users','stores.user_id','users.id')
+            ->select('stores.*','users.name as owner')
+            ->where('stores.id','=',$id)
+            ->orderBy('stores.created_at','desc')
+            ->first();
+            return $this->onSuccess($store);
+        }else{
+            $store = Stores::join('users','stores.user_id','users.id')
+            ->where('stores.user_id','=',auth()->user()->id)
+            ->where('stores.id','=',$id)
+            ->select('stores.*','users.name as owner')
+            ->orderBy('stores.created_at','desc')
+            ->first();
+            return $this->onSuccess($store);
+        }
+
+        // mobile
+        // if admin|moderator retreive all stores
+        if($this->isAdmin(auth()->user()) || $this->isModerator(auth()->user())){
+            $store = Stores::join('users','stores.user_id','users.id')
+            ->select('stores.*','users.name as owner')
+            ->where('stores.id','=',$id)
+            ->orderBy('stores.created_at','desc')
+            ->first();
+            return $this->onSuccess($store);
+        }else{
+            // if not find all store that associated with user id
+            // $store = User::with('stores')->find(auth()->user()->id)->stores;
+            $store = Stores::join('users','stores.user_id','users.id')
+            ->where('stores.user_id','=',auth()->user()->id)
+            ->where('stores.id','=',$id)
+            ->select('stores.*','users.name as owner')
+            ->orderBy('stores.created_at','desc')
+            ->first();
+            return $this->onSuccess($store);
         }                
     }
 

@@ -24,7 +24,9 @@ class UserController extends Controller
         // $users = User::all();
          // check token ability
         if(auth()->user()->tokenCan('admin')){
-            $users = User::all();
+            $users = User::join('roles','users.role','roles.id')
+            ->select('users.id','users.name','users.email','users.is_active','users.role as role_id','roles.title as role')
+            ->get();
            return $this->onSuccess($users);
         }
         
@@ -141,6 +143,29 @@ class UserController extends Controller
         [
             'user'=>$user->first()
         ], 200);
+    }
+
+
+    public function update_user_role(Request $request,$id){       
+        $validator = Validator::make($request->all(), [
+            'role' => 'required',            
+        ]);
+        if($validator->fails()){
+            $response = [
+                'message' => 'User not updated!', 
+                'error' => $validator->messages()              
+            ];
+            return response($response, 201);       
+        }
+
+        $user = User::find($id);
+
+        $user->update([
+            'role' => $request->role,            
+        ]);            
+
+
+        return $this->onSuccess($user->join('roles','users.role','roles.id')->select('users.id','users.name','users.email','users.is_active','users.role as role_id','roles.title as role')->first(),'User updated successfully!');
     }
 
     public function delete($id){

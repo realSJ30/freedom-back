@@ -7,11 +7,13 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\User;
 use Auth;
 use App\Http\Traits\RoleTrait;
+use App\Http\Traits\ApiTrait;
 
 class AuthController extends Controller
 {
 
     use RoleTrait;
+    use ApiTrait;
 
     // get csrf token via postman -- for testing purpose
     public function csrf(){
@@ -29,7 +31,7 @@ class AuthController extends Controller
 
         if($validator->fails()){
             $response = [
-                'message' => 'Email/Password Incorrect!', 
+                'message' => 'Email or Password Incorrect!', 
                 'error' => $validator->messages()              
             ];
             return response($response, 201);       
@@ -63,13 +65,17 @@ class AuthController extends Controller
                     $token = $user->createToken('personal-token',['subscriber'])->plainTextToken;      
                     break;
             }                          
+
+            // for postman
             return response()->json([
-                'user'=>$user,
+                'data'=>$user,
                 'token'=>$token
             ], 201);
+
+            // return $this->onSuccess($user);
         }
 
-        return response()->json(['message' => 'Invalid credentials']);
+        return $this->onError(201,'Email or Password Incorrect!');
     }
 
 
@@ -101,6 +107,11 @@ class AuthController extends Controller
         return response()->json([
             'message'=>'Logout success!',            
         ], 201);
+    }
+
+    public function get_authenticated_user(){
+        $user = auth()->user();
+        return $this->onSuccess($user);
     }
 
 
